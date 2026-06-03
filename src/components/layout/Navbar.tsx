@@ -21,13 +21,20 @@ const navItems: NavItem[] = [
 
 // Pages that have a dark hero/banner behind the navbar
 const darkHeroPages = ["/", "/about"];
+const darkHeroPagePrefixes = ["/projects/"];
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
-  // Only use transparent/light text on pages with dark hero backgrounds
-  const hasDarkHero = darkHeroPages.includes(pathname);
+  // Only use transparent/light text on pages with dark hero backgrounds.
+  // Project detail pages (/projects/<slug>) have a full-bleed dark hero, but
+  // the listing page (/projects) does not.
+  const hasDarkHero =
+    darkHeroPages.includes(pathname) ||
+    darkHeroPagePrefixes.some(
+      (prefix) => pathname.startsWith(prefix) && pathname !== prefix.replace(/\/$/, "")
+    );
   const useDarkText = !hasDarkHero || scrolled;
 
   useEffect(() => {
