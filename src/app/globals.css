@@ -1,26 +1,71 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 250 248 244;
+    --foreground: 28 28 24;
+    --card: 255 255 255;
+    --card-foreground: 28 28 24;
+    --muted: 234 233 228;
+    --muted-foreground: 107 106 90;
+    --accent: 180 137 42;
+    --accent-foreground: 28 28 24;
+    --border: 212 210 202;
+    --input: 234 233 228;
+    --ring: 180 137 42;
+    --radius: 0.25rem;
+  }
+
+  * {
+    border-color: theme('colors.warm.200');
+  }
+
+  html {
+    @apply scroll-smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-warm-50 text-charcoal font-sans;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+
+  ::selection {
+    @apply bg-gold-200 text-charcoal;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-warm-100;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-warm-400 rounded-full;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .section-padding {
+    @apply px-5 sm:px-8 md:px-12 lg:px-16 xl:px-20;
+  }
+  .max-site {
+    @apply max-w-site mx-auto;
+  }
+  .gold-line {
+    @apply block h-px bg-gold-400;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
 }

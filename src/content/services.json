@@ -1,0 +1,38 @@
+[
+  {
+    "id": "millwork",
+    "icon": "Layers",
+    "name": "Custom Millwork",
+    "description": "Handcrafted cabinetry, built-ins, and architectural woodwork tailored to your space. Every joint, edge, and finish is executed with museum-level precision."
+  },
+  {
+    "id": "interiors",
+    "icon": "Sofa",
+    "name": "Interior Renovation",
+    "description": "Complete interior transformations that harmonize form and function. We design spaces that elevate daily living into an art form."
+  },
+  {
+    "id": "commercial",
+    "icon": "Building2",
+    "name": "Commercial Upholstery",
+    "description": "Office, retail, and hospitality environments designed to inspire productivity and leave lasting impressions on clients and guests."
+  },
+  {
+    "id": "residential",
+    "icon": "Home",
+    "name": "Residential Design",
+    "description": "From concept to completion, we create homes that reflect your lifestyle. Thoughtful layouts, curated materials, and timeless aesthetics."
+  },
+  {
+    "id": "consulting",
+    "icon": "PenTool",
+    "name": "Design Consulting",
+    "description": "Expert guidance on materials, finishes, and spatial planning. Whether you need a second opinion or full creative direction, we're here."
+  },
+  {
+    "id": "renovation",
+    "icon": "Wrench",
+    "name": "Renovation & Restoration",
+    "description": "Breathing new life into heritage properties and outdated spaces. We preserve character while introducing modern comfort and efficiency."
+  }
+]

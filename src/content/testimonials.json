@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "quote": "The attention to detail was extraordinary. Every corner of our kitchen feels intentional and luxurious. They truly understood our vision from day one.",
+    "author": "Maran",
+    "project": "Kitchen Renovation"
+  },
+  {
+    "id": 2,
+    "quote": "Our bathroom transformation exceeded every expectation. The craftsmanship is impeccable and the design feels like a five-star spa retreat.",
+    "author": "Bhuvanesh",
+    "project": "Bathroom Remodel"
+  },
+  {
+    "id": 3,
+    "quote": "Working with Phoenix Custom Millwork was a seamless experience from concept to completion. The built-in cabinetry is a work of art that perfectly complements our home.",
+    "author": "Rahul Raj",
+    "project": "Living Room Built-ins"
+  },
+  {
+    "id": 4,
+    "quote": "They took our chaotic open-plan office and transformed it into a space that inspires creativity. Our team morale has genuinely improved.",
+    "author": "Kadir",
+    "project": "Office Fit-out"
+  },
+  {
+    "id": 5,
+    "quote": "Restoration of Janet's home interior was handled with exceptional care. It looks awesome and they build functional pieces that fit the space perfectly.",
+    "author": "Prem S",
+    "project": "Interior Renovation"
+  }
+]
