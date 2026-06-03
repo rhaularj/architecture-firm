@@ -2,11 +2,24 @@ import { google } from "googleapis";
 import type { Project } from "@/types/project";
 import type { Resource } from "@/types/resource";
 
+function normalizePrivateKey(privateKey: string | undefined): string | undefined {
+  if (!privateKey) return undefined;
+
+  return privateKey.trim().replace(/^['"]|['"]$/g, "").replace(/\\n/g, "\n");
+}
+
+function hasDriveCredentials(): boolean {
+  return Boolean(
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+      normalizePrivateKey(process.env.GOOGLE_PRIVATE_KEY)
+  );
+}
+
 function getAuth() {
   return new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      private_key: normalizePrivateKey(process.env.GOOGLE_PRIVATE_KEY),
     },
     scopes: ["https://www.googleapis.com/auth/drive.readonly"],
   });
@@ -112,58 +125,68 @@ export async function getProjectsFromDrive(): Promise<Project[]> {
     return [];
   }
 
-  // 1. Find and fetch projects.json in the folder
-  const files = await getDriveFiles(projectsFolderId);
-  const jsonFile = files.find(
-    (f) => f.name?.toLowerCase() === "projects.json" && f.id
-  );
-
-  if (!jsonFile?.id) {
-    console.warn("projects.json not found in Drive projects folder");
+  if (!hasDriveCredentials()) {
+    console.warn("Google Drive credentials not set, returning empty projects");
     return [];
   }
 
-  type ProjectMeta = Omit<Project, "coverImage" | "images"> & {
-    coverImage?: string;
-    images?: string[];
-  };
-  const projectsMeta = await getDriveJsonFile<ProjectMeta[]>(jsonFile.id);
+  try {
+    // 1. Find and fetch projects.json in the folder
+    const files = await getDriveFiles(projectsFolderId);
+    const jsonFile = files.find(
+      (f) => f.name?.toLowerCase() === "projects.json" && f.id
+    );
 
-  // 2. Get subfolders (one per project slug)
-  const subfolders = await getDriveSubfolders(projectsFolderId);
-  const folderMap = new Map(subfolders.map((f) => [f.name!, f.id!]));
+    if (!jsonFile?.id) {
+      console.warn("projects.json not found in Drive projects folder");
+      return [];
+    }
 
-  // 3. Resolve images for each project
-  const projects: Project[] = await Promise.all(
-    projectsMeta.map(async (meta) => {
-      const folderId = folderMap.get(meta.slug);
-      if (!folderId) {
+    type ProjectMeta = Omit<Project, "coverImage" | "images"> & {
+      coverImage?: string;
+      images?: string[];
+    };
+    const projectsMeta = await getDriveJsonFile<ProjectMeta[]>(jsonFile.id);
+
+    // 2. Get subfolders (one per project slug)
+    const subfolders = await getDriveSubfolders(projectsFolderId);
+    const folderMap = new Map(subfolders.map((f) => [f.name!, f.id!]));
+
+    // 3. Resolve images for each project
+    const projects: Project[] = await Promise.all(
+      projectsMeta.map(async (meta) => {
+        const folderId = folderMap.get(meta.slug);
+        if (!folderId) {
+          return {
+            ...meta,
+            coverImage: meta.coverImage ?? "/images/placeholder.jpg",
+            images: meta.images ?? [],
+          } as Project;
+        }
+
+        const images = await getDriveImages(folderId);
+        const coverFile = images.find((img) =>
+          img.name?.toLowerCase().startsWith("cover")
+        );
+        const otherImages = images.filter(
+          (img) => !img.name?.toLowerCase().startsWith("cover")
+        );
+
         return {
           ...meta,
-          coverImage: meta.coverImage ?? "/images/placeholder.jpg",
-          images: meta.images ?? [],
+          coverImage: coverFile?.id
+            ? getDriveImageUrl(coverFile.id)
+            : meta.coverImage ?? "/images/placeholder.jpg",
+          images: otherImages.map((img) => getDriveImageUrl(img.id!)),
         } as Project;
-      }
+      })
+    );
 
-      const images = await getDriveImages(folderId);
-      const coverFile = images.find((img) =>
-        img.name?.toLowerCase().startsWith("cover")
-      );
-      const otherImages = images.filter(
-        (img) => !img.name?.toLowerCase().startsWith("cover")
-      );
-
-      return {
-        ...meta,
-        coverImage: coverFile?.id
-          ? getDriveImageUrl(coverFile.id)
-          : meta.coverImage ?? "/images/placeholder.jpg",
-        images: otherImages.map((img) => getDriveImageUrl(img.id!)),
-      } as Project;
-    })
-  );
-
-  return projects;
+    return projects;
+  } catch (error) {
+    console.warn("Unable to load Google Drive projects, returning empty projects", error);
+    return [];
+  }
 }
 
 /**
@@ -181,35 +204,45 @@ export async function getResourcesFromDrive(): Promise<Resource[]> {
     return [];
   }
 
-  const files = await getDriveFiles(resourcesFolderId);
+  if (!hasDriveCredentials()) {
+    console.warn("Google Drive credentials not set, returning empty resources");
+    return [];
+  }
 
-  return files
-    .filter((f) => f.id && f.name)
-    .map((f, index) => {
-      const name = f.name!;
-      const ext = name.split(".").pop()?.toLowerCase() ?? "pdf";
-      const title = name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
-      const sizeBytes = parseInt(f.size ?? "0", 10);
-      const fileSize = sizeBytes > 1048576
-        ? `${(sizeBytes / 1048576).toFixed(1)} MB`
-        : `${Math.round(sizeBytes / 1024)} KB`;
+  try {
+    const files = await getDriveFiles(resourcesFolderId);
 
-      // Infer category from filename or description
-      let category: Resource["category"] = "catalog";
-      const lower = name.toLowerCase();
-      if (lower.includes("guide") || lower.includes("care")) category = "guide";
-      else if (lower.includes("standard") || lower.includes("spec")) category = "standards";
-      else if (lower.includes("disclaim") || lower.includes("legal")) category = "legal";
+    return files
+      .filter((f) => f.id && f.name)
+      .map((f) => {
+        const name = f.name!;
+        const ext = name.split(".").pop()?.toLowerCase() ?? "pdf";
+        const title = name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
+        const sizeBytes = parseInt(f.size ?? "0", 10);
+        const fileSize = sizeBytes > 1048576
+          ? `${(sizeBytes / 1048576).toFixed(1)} MB`
+          : `${Math.round(sizeBytes / 1024)} KB`;
 
-      return {
-        id: f.id!,
-        title,
-        description: (f.description as string) ?? "",
-        fileUrl: getDriveDownloadUrl(f.id!),
-        fileType: (ext === "pdf" || ext === "doc" || ext === "xlsx" ? ext : "pdf") as Resource["fileType"],
-        fileSize,
-        category,
-        driveFileId: f.id!,
-      };
-    });
+        // Infer category from filename or description
+        let category: Resource["category"] = "catalog";
+        const lower = name.toLowerCase();
+        if (lower.includes("guide") || lower.includes("care")) category = "guide";
+        else if (lower.includes("standard") || lower.includes("spec")) category = "standards";
+        else if (lower.includes("disclaim") || lower.includes("legal")) category = "legal";
+
+        return {
+          id: f.id!,
+          title,
+          description: (f.description as string) ?? "",
+          fileUrl: getDriveDownloadUrl(f.id!),
+          fileType: (ext === "pdf" || ext === "doc" || ext === "xlsx" ? ext : "pdf") as Resource["fileType"],
+          fileSize,
+          category,
+          driveFileId: f.id!,
+        };
+      });
+  } catch (error) {
+    console.warn("Unable to load Google Drive resources, returning empty resources", error);
+    return [];
+  }
 }

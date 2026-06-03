@@ -1,11 +1,17 @@
 import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
 
+function normalizePrivateKey(privateKey: string | undefined): string | undefined {
+  if (!privateKey) return undefined;
+
+  return privateKey.trim().replace(/^['"]|['"]$/g, "").replace(/\\n/g, "\n");
+}
+
 function getAuth() {
   return new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      private_key: normalizePrivateKey(process.env.GOOGLE_PRIVATE_KEY),
     },
     scopes: ["https://www.googleapis.com/auth/drive.readonly"],
   });
