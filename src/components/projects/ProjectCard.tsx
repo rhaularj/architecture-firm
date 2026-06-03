@@ -12,7 +12,7 @@ interface ProjectCardProps {
 export function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Link
-      href={`/projects/${project.slug}`}
+      href={`/projects/${encodeURIComponent(project.slug)}`}
       className="group block relative overflow-hidden rounded-sm"
     >
       <motion.div

@@ -74,7 +74,7 @@ function ProjectCard({
   aspect: string;
 }) {
   return (
-    <Link href={`/projects/${project.slug}`} className="block group relative overflow-hidden rounded-sm">
+    <Link href={`/projects/${encodeURIComponent(project.slug)}`} className="block group relative overflow-hidden rounded-sm">
       <motion.div
         className={`relative ${aspect} w-full`}
         whileHover={{ scale: 1.02 }}

@@ -1,17 +1,50 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getProjectsFromDrive } from "@/lib/googleDrive";
+import type { Project } from "@/types/project";
 
 export const revalidate = 3600;
+
+function normalizeSlug(value: string) {
+  let decoded = value;
+
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    decoded = value;
+  }
+
+  return decoded
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function findProjectBySlug(projects: Project[], routeSlug: string) {
+  const normalizedRouteSlug = normalizeSlug(routeSlug);
+
+  return projects.find(
+    (project) =>
+      normalizeSlug(project.slug) === normalizedRouteSlug ||
+      normalizeSlug(project.title) === normalizedRouteSlug
+  );
+}
 
 export async function generateStaticParams() {
   const projects = await getProjectsFromDrive();
   return projects.map((p) => ({ slug: p.slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
   const projects = await getProjectsFromDrive();
-  const project = projects.find((p) => p.slug === params.slug);
+  const project = findProjectBySlug(projects, slug);
   if (!project) return { title: "Project Not Found" };
   return {
     title: project.title,
@@ -22,10 +55,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function ProjectDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
   const projects = await getProjectsFromDrive();
-  const project = projects.find((p) => p.slug === params.slug);
+  const project = findProjectBySlug(projects, slug);
   if (!project) notFound();
 
   return (
