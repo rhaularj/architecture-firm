@@ -1,6 +1,7 @@
 import { HeroSection } from "@/components/home/HeroSection";
 import { ServicesOverview } from "@/components/home/ServicesOverview";
 import { FeaturedProjects } from "@/components/home/FeaturedProjects";
+import { ClientLogoMarquee } from "@/components/home/ClientLogoMarquee";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
 import { getProjectsFromDrive, getDriveImageOrFallback } from "@/lib/googleDrive";
 import services from "@/content/services.json";
@@ -24,6 +25,7 @@ export default async function HomePage() {
       />
       <ServicesOverview services={services} />
       <FeaturedProjects projects={featuredProjects} />
+      <ClientLogoMarquee />
       <TestimonialsCarousel testimonials={testimonials} />
     </>
   );
